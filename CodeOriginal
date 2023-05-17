@@ -1,0 +1,441 @@
+Sub STEP1_SeparateClient()
+'version 1.8 20201013
+
+Dim sht As Worksheet
+Dim i, k, y, j As Integer
+Dim z As Integer ' z 为行内循环因数
+Dim Irow As Integer 'this is Number of rows
+Dim l As Integer 'this is the number of colonne you want filter
+Dim sht1 As Worksheet
+Dim ThisWeek, LastWeek As String
+Dim Yrow As Integer
+Dim Ata, Eta As Integer '这里定义ETA 和 ATA的列数
+Dim AtaLastWeek
+
+ '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ 
+ '开发日志:
+ '15/06/2020 【开发难点1】有个个别客户名字，不规范，包括且不仅限于：存在/ 符号等无法命名的名字，需要在宏运行前规范命名
+ '18/06/2020 现在需要添新的功能：分类完的sheet不能有原文件那么多列，需要分类完之前把多余列删除  `
+ '19/06/2020 已经解决【开发难点2】 使用len(trim())=0 来判断是否为真空
+ '20/06/2020 【新增需求1】在同目录下生成命名为 【PortefeuillePourClient + data】的文件夹
+ '20/06/2020 【新增需求2】将生成的客户文件存放在【PortefeuillePourClient + data】里，且命名+data
+ '28/06/2020 【开发难点3】 需要再生成页面进行更多操作。然而代码无法选中生成页面，最后添加Sheets(j).Select成功解决。以此类推还可以进行更多操作
+ '28/06/2020 【新增需求3】高亮，粗体本周行列。
+ '30/06/2020 【新增需求4】 阻止不需要的客户以及tracking file本省生成表格
+ '06/07/2020 【新增需求5】 仅仅保留ata近两周的数据。以及在ata为tbc 或者空格的数据
+ '20/07/2020 【新增需求6】 按照ata日期排列，排除SAV Phone表格
+ '28/0/2020 【debug1】生成的sheet ata和 前面的数据不相符。逐段加入评论排查
+ '09/09/2020 【新增需求7】在ata为tbc（即还没送达），但eta已超过ata前后两周的，高亮
+ '13/10/2020 【新增需求8】eta本周和上周，但还没确认送达，ata为tbc，表色
+ '13/11/2020 【更新9】整合了 【需求7 8】 给新建文件名增加了 week数
+ '27/11/2020 【修改10】修改了更不刺眼的颜色
+ '26/04/2021 【新增需求11】修改了以周数ww为判断日期的bug，2020年和2021年不同年份同样周数区分开
+ '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+'这里固定是第三行client，我们以不删除原则，让l固定等于3
+'l = InputBox("请输入你要按哪列分？")
+l = 3
+
+'0. 把除了第一张数据表之外的都删掉-----------------------------------------
+Application.DisplayAlerts = False
+'在删表之前记得把警告关掉
+
+For Each sht1 In Sheets
+        If sht1.Name <> "TRACKING FR" Then
+            sht1.Delete
+        End If
+Next
+
+Application.DisplayAlerts = True
+'删完表记得把警告重新打开------------------------------------------------------
+
+
+Irow = Sheet1.Range("a65536").End(xlUp).Row
+
+'1.整合表，根据所选的列，生成本列
+For i = 2 To Irow
+    k = 0
+    'k回复成0，
+    'k =1在这里作为一个终止符，如果k=1那么该表已经生成
+    
+    If Sheet1.Cells(i, l) = "CAMELEON" Or Sheet1.Cells(i, l) = "QDOS" Or Sheet1.Cells(i, l) = "HighcoData" Or Sheet1.Cells(i, l) = "OPPO" _
+    Or Sheet1.Cells(i, l) = "SAV Phone" Or Sheet1.Cells(i, l) = "Suisse" Or Sheet1.Cells(i, l) = "SFR Caraibe" Or Sheet1.Cells(i, l) = "Atmosphere" Then
+       k = 1
+    End If
+    '【新增需求4】我们可以以k为终止符来阻止一些客户名生成表格
+    
+    
+
+'%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    '【开发难点1】：生成新工作表的
+    '需要排除掉空白格的可能性，否则无法新建表,关键就在如何判断是否是空白格，佩老师的例子中都是规则的X*X表格，表格的最下一列就是选择列的最后一列，即不存在空格
+    '然在很多实际工作情况下，比如这里会有空格。那原来的判断条件 sht.Name = Sheet1.Cells(i, l) 不能满足了。 那么实际上这里有两个需要判断的条件：
+    '1. 以生成的表格不能 和 分类列的 同名否则终止（不能叫终止，应该叫跳过更好）
+    '2.分类列 不能为空格  否则也跳过 生成表格
+'%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    For Each sht In Sheets
+        If Len(Trim(Sheet1.Cells(i, l))) = 0 Then
+            k = 1
+            ElseIf sht.Name = Sheet1.Cells(i, l) Then
+                k = 1
+        End If
+    Next
+    
+    '如果该表没有生成，那么以下生成
+    '同时注意有blank空白格，需要排除掉空白格的可能性，否则无法新建表
+     '赋值到V列来检验K的阈值系统是否成功
+     '【v列和w列】是测试列，以下测试行为
+    'Sheet1.Range("v" & i) = k
+    'If Len(Trim(Sheet1.Cells(i, l))) = 0 Then
+     '   Sheet1.Range("w" & i) = "空格"
+      '  Else
+       ' Sheet1.Range("w" & i) = "不是空格"
+    'End If
+    
+'%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    '【开发难点2】：真空 和 假空 的区别，和查找及应对方式
+    '06/19 原因：
+    '定位与查找的本质区别:
+    '当你用定位这个条件来定位空值的时候，实际上是让EXCEL去定位空单元格，
+    '而你用查找这个条件来查找空值的时候，实际上是让EXCEL去查找数据。
+    '真空与假空:
+    '一个单元格，我们什么都不录入，或者录入后又删除了，那它就什么都没有，我们称它为“真空”单元格。
+    '如果一个公式我们由种种原因（公式、转义等）产生了空文本，这样的文本经过复制粘贴之后的数值也是空的，虽然看着是空的但是实际上是“”，我们称这种情况为：“假空”。
+
+    '定位会定位“真空”
+    '查找会查找“假空”
+
+    '【解决办法】
+    '通过种种实验我发现判断是否为真空 十分困难。 ="" 或者 isempty都仅能判断假空
+    '且全选替换/delete都不能成功将假空替换为真空
+    '目前最好办法 len（trim（）） =0
+    'trim：删除字符串两侧空格
+    'len：返回字符串字符数
+    
+    
+'%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    If k = 0 Then
+        Sheets.Add after:=Sheets(Sheets.Count)
+        Sheets(Sheets.Count).Name = Sheet1.Cells(i, l)
+    End If
+    
+    
+    
+Next
+'文件原本有一些问题：
+'1.sheet新建名字不可以有 / 等符号所以client名字也不可以有符号
+
+
+
+
+'%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  '定义当前周数以及，前周数 下周数
+                ThisWeek = Format(Date, "yyyyww")
+                LastWeek = Format(Date - 7, "yyyyww")
+                NextWeek = Format(Date + 7, "yyyyww")
+                Next2Week = Format(Date + 14, "yyyyww")
+
+
+'MsgBox (Val(Format(Cells(i, Ata), "ww")))
+
+
+'2.筛选拷贝数据到表，重要：根据产生的表名来筛选
+    'z 用来行内循环 z是从1到12循环
+
+    For j = 2 To Sheets.Count
+        Sheet1.Range("a1:u" & Irow).AutoFilter Field:=l, Criteria1:=Sheets(j).Name
+        'Criteria1 最后是数字1 不是字母！！！
+        
+        Sheet1.Range("a1:u" & Irow).Copy Sheets(j).Range("a1")
+        '在将赛选完成的结果粘贴到和赛选条件相同的工作表里
+        
+                '生成表格后在新表中做的操作
+                
+                '第一步 先删除多余信息行
+                Sheets(j).Select
+                ActiveSheet.Range("K:K,L:L,M:M,O:O,R:R,S:S,T:T,U:U,V:V,I:I").Select
+                Selection.Interior.Color = "65534"
+                '标记条，在删除前用于测试被删除项
+                Selection.Delete 'Shift:=xlToLeft
+                '【开发难点3】添加了 Sheets(j).Select 来选定每次生成的表格再进行操作
+                '【更新 07/02】添加了I列删除项 batch
+                
+                
+                '第二步 把每一个格等宽，以及去除原来的得乱七八糟得颜色
+                ActiveSheet.Range("A1:M80").EntireColumn.AutoFit
+                '选中列长度适配
+                ActiveSheet.Range("a2:u" & Irow).Interior.Pattern = xlNone
+                
+                
+                
+                Yrow = ActiveSheet.Range("a65536").End(xlUp).Row
+                '定义当前总行数
+                 
+                
+        
+                
+                
+                '定义 ata eta所在列数
+                Ata = 12
+                Eta = 11
+                
+                
+                         '【整合 需求7 8】对PO根据颜色分类
+                        '1. 【蓝色】 PO 近期（eta两周内，本周上周下周）正在进行的
+                        '2. 【绿色】 PO 近期（eta两周内，本周上周下周）完成的
+                        '3. 【黄色】 PO 已有eta，超过 两周 未送达的
+                        '4. 【无色】 PO 尚未 安排eta，更无 ata 但已经录入系统 trackingfile
+                        '5. 【 删除】 PO ata 已经送达 且超过两周
+                        
+                    
+                    
+                        For i = Yrow To 2 Step -1
+                        '循环删除行注意两点：1要从后向前逆向循环，2for语句中要记得step -1
+                            
+                            '【注意！！！】判断未送达有两点 tbc 无论大小写 ，空格 （真空 和 假空 ）
+                            'UCase(Cells(i, Ata)) = "TBC" And Len(Trim(Cells(i, Ata)))=0
+                            
+                            
+                         'Cells(i, 13) = Val(Format(Cells(i, Ata), "yyyyww")) - Val(Format(Cells(i, Eta), "yyyyww"))
+                        '【测试列】从来再最后一列显示实际周数差
+                        
+                                '【需求8】eta本周和上周，但还没确认送达，ata为tbc 或者 ata 为空格，标色
+                                '1. 【蓝色】 PO 近期（两周内，本周上周下周）正在进行的
+                                
+                                    If Abs(Val(Format(Date, "yyyyww")) - Val(Format(Cells(i, Eta), "yyyyww"))) <= 2 Then
+                                        
+                                        If (UCase(Cells(i, Ata)) = "TBC" Or Len(Trim(Cells(i, Ata))) = 0) Then
+                                  
+                                           For z = 1 To 12 Step 1
+                                    
+                                               Cells(i, z).Interior.Color = RGB(0, 140, 255)
+                                       
+                                           Next
+                                            '从美观角度，不需整行变色，只需要到1到12列变蓝色
+                                            'eta在两周内，未完成变成蓝色
+                                            
+                                        Else
+                                            
+                                            For z = 1 To 12 Step 1
+                                
+                                            Cells(i, z).Interior.Color = RGB(144, 238, 144)
+                                            'eta在两周内，完成变成绿色
+                                   
+                                            Next
+                                            
+                                            
+                                        End If
+                    
+                                    End If
+                        
+                        
+                                '【需求7】
+                                    If (UCase(Cells(i, Ata)) = "TBC" Or (Trim(Cells(i, Ata))) = 0) And UCase(Cells(i, Eta)) <> "TBC" And Abs(Val(Format(Date, "yyyyww")) - Val(Format(Cells(i, Eta), "yyyyww"))) >= 3 Then
+                                        
+                                        For z = 1 To 12 Step 1
+                                            
+                                            Cells(i, z).Interior.Color = RGB(240, 128, 128)
+                                        
+                                        Next
+                                            
+                                    End If
+                                        '高亮条件
+                                        '1. ATA is TBS 以及 空格 , ETA is not TBC, 也就是说ETA已定，但还没送达
+                                        '2.ETA超过目前时间两周，也就是说条件1已经超过2周了
+                                        '【笔记】 ucase函数 把所有字符变成大写，如此比较时就不会漏掉小写tbc，所有与tbc判断的语句都要加上ucase
+                                        
+                            
+                        
+                        
+                        
+                            If Abs(ThisWeek - Val(Format(Cells(i, Ata), "yyyyww"))) >= 2 And Cells(i, Ata) <> "TBC" And Len(Trim(Cells(i, Ata))) <> 0 Then
+                                
+                                'ATA 在目前周，或者上周 或上上周，不是tbc，不是空格就删除。
+                                '实验行，用于区别高亮是否成功选中需要删除项
+                                 Cells(i, Ata).EntireRow.Interior.Color = "65534"
+                                 '在这行把标黄的行删除。为何不直接删除：直接删除很难再调试中调试
+                                 Cells(i, Ata).EntireRow.Delete
+                                 
+                                 
+                            End If
+                            
+                            
+        
+                            
+                        Next
+            
+
+        
+           
+       '【新增需求4】 阻止不需要的客户以及tracking file本省生成表格
+        
+    
+        '【新增需求5】进阶保留近两周的数据。以及在ata为tbc 或者空格的数据
+        
+        
+       'End With
+     '20/07/2020 【新增需求6】 按照ata日期排列，排除SAV Phone表格
+      '28/0/2020 【debug1】生成的sheet ata和 前面的数据不相符。逐段加入评论排查,在排查到按照ata日期排列时，回复正常，逐去除这一功能
+      
+    
+        '全部都结束了，让我们恢复原样
+        ActiveSheet.Range("a1").Select
+   
+       
+        
+        '最后一步操作 将行列按照颜色排列
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                        Selection.AutoFilter
+                        ActiveSheet.AutoFilter.Sort.SortFields.Clear
+                        ActiveSheet.AutoFilter.Sort.SortFields.Add(Range( _
+                            "L:L"), xlSortOnCellColor, xlAscending, , xlSortNormal).SortOnValue.Color = _
+                            RGB(144, 238, 144)
+                        With ActiveSheet.AutoFilter.Sort
+                            .Header = xlYes
+                            .MatchCase = False
+                            .Orientation = xlTopToBottom
+                            .SortMethod = xlPinYin
+                            .Apply
+                         End With
+
+        
+        Sheet1.ShowAllData
+
+        '把表格1的从筛选模式取消
+
+    Next
+
+'最后的最后我们把他那穿表选择到第一张表，因为处理完默认active在最后一张生成的表
+'然后再弹窗告诉使用者我们操作好了
+      
+
+
+
+Sheet1.Select
+Dim x  As String
+x = Sheet1.Cells(1, l)
+MsgBox "The corresponding worksheet has been generated based on the customer name"
+ 
+ 
+
+ 
+End Sub
+
+Sub Restore()
+Application.DisplayAlerts = False
+'在删表之前记得把警告关掉
+
+For Each sht1 In Sheets
+        If sht1.Name <> "TRACKING FR" Then
+            sht1.Delete
+        End If
+Next
+
+Application.DisplayAlerts = True
+'删完表记得把警告打开
+End Sub
+
+Sub SEPT2_GeneratedPorteFeuilleForClient()
+Dim sht As Worksheet
+Dim Filepath As String  '第一层路径，用于生成文件夹
+Dim Filepath2 As String '第二层路径，用于将文件存储与第一层生成的文件夹内
+
+
+Filepath = ThisWorkbook.Path
+'设置当前文件的位置
+
+'【新增需求1】在同目录下生成命名为 【PortefeuillePourClient + data】的文件夹
+'首先需要检验该文件夹是否已经生成
+    If Dir(Filepath & "\PortefeuillePourClient" & Format(Now(), "_yyyymmdd"), vbDirectory) = "" Then
+        
+         MkDir Filepath & "\PortefeuillePourClient" & Format(Now(), "_yyyymmdd")
+         'Filepath2 = Dir(Filepath & "\PortefeuillePourClient" & Format(Now(), "yyyymmdd"))
+         '如果不存在。那么，新建文件夹，再获取路径
+         
+         'Else
+        ' Filepath2 = Dir(Filepath & "\PortefeuillePourClient" & Format(Now(), "yyyymmdd"))
+         '如果已存在此文件夹，那么获取路径
+    End If
+    
+    Filepath2 = Filepath & "\PortefeuillePourClient" & Format(Now(), "_yyyymmdd")
+    '不知道为什么使用dir获取路径失败，然鹅直接使用暴力拼接就能成功获取相应路径，前面搞了半天，我是傻逼
+    MsgBox Filepath2
+    
+'-------------------------------------------------------------------------
+ '你不能同时定义文件夹名和要保存的文件名，所以我们要先取的当日生成的文件夹的路径 Filepath2
+'如果已存在此文件夹，那么获取路径
+'如果不存在。那么，新建文件夹，再获取路径
+
+
+
+For Each sht In Sheets
+
+    k = 0
+    '还原终止符
+    Krow = sht.Range("a65536").End(xlUp).Row
+    '行数也是终止符，如果少于两行也不需要生成
+    
+    If sht.Name = "TRACKING FR" Or Krow < 2 Then
+    
+        k = 1
+        
+    End If
+    'k =1 在这里作为终止符
+    
+    If k = 0 Then
+    
+        sht.Copy
+        'ActiveWorkbook.SaveAs Filename:="g:\data\ " & sht.Name & ".xlsx"
+         '此为原代码，固定保存在g:\data 文件夹下面
+         '现在我们要保存在当前文件夹
+        
+        '【新增需求2】你不能同时定义文件夹名和要保存的文件名，所以我们要先取的当日生成的文件夹的路径Filepath2
+    
+        ActiveWorkbook.SaveAs Filename:=Filepath2 & "\" & sht.Name & " " & Format(Now(), "_yyyymmdd") & ".xlsx"
+        ActiveWorkbook.Close
+    
+    End If
+    
+Next
+
+'MsgBox " Fils costomes has been generated in folder PorteFeuilleForClient"
+    
+End Sub
+
+
+
+'Sub GetPath()
+'Filepath = ThisWorkbook.Path
+'MsgBox Filepath
+'MsgBox Filepath & "\" & "aabb" & ".xlsx"
+
+'End Sub
+
+Sub eclartDate()
+Dim i As Integer
+
+ Yrow = ActiveSheet.Range("a65536").End(xlUp).Row
+For i = 1 To Yrow
+
+
+    
+    If Format(Cells(i, 11), "yyyy - ww") = Format(Cells(i, 12), "yyyy - ww") Then
+      
+        Cells(i, 11).Interior.Color = "65534"
+    End If
+    
+  
+Next
+
+End Sub
