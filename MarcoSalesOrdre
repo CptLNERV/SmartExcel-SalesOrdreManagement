@@ -1,0 +1,449 @@
+Attribute VB_Name = "Module1"
+Sub STEP1_SeparateClient()
+'version 1.8 20201013
+
+Dim sht As Worksheet
+Dim i, k, y, j As Integer
+Dim z As Integer ' z Ϊ����ѭ������
+Dim Irow As Integer 'this is Number of rows
+Dim l As Integer 'this is the number of colonne you want filter
+Dim sht1 As Worksheet
+Dim ThisWeek, LastWeek As String
+Dim Yrow As Integer
+Dim Ata, Eta As Integer '���ﶨ��ETA �� ATA������
+Dim AtaLastWeek
+
+ '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ 
+ '������־:
+ '15/06/2020 �������ѵ�1���и�����ͻ����֣����淶�������Ҳ������ڣ�����/ ���ŵ��޷����������֣���Ҫ�ں�����ǰ�淶����
+ '18/06/2020 ������Ҫ���µĹ��ܣ��������sheet������ԭ�ļ���ô���У���Ҫ������֮ǰ�Ѷ�����ɾ��  `
+ '19/06/2020 �Ѿ�����������ѵ�2�� ʹ��len(trim())=0 ���ж��Ƿ�Ϊ���
+ '20/06/2020 ����������1����ͬĿ¼����������Ϊ ��PortefeuillePourClient + data�����ļ���
+ '20/06/2020 ����������2�������ɵĿͻ��ļ�����ڡ�PortefeuillePourClient + data���������+data
+ '28/06/2020 �������ѵ�3�� ��Ҫ������ҳ����и��������Ȼ�������޷�ѡ������ҳ�棬�������Sheets(j).Select�ɹ�������Դ����ƻ����Խ��и������
+ '28/06/2020 ����������3�����������屾�����С�
+ '30/06/2020 ����������4�� ��ֹ����Ҫ�Ŀͻ��Լ�tracking file��ʡ���ɱ���
+ '06/07/2020 ����������5�� ��������ata�����ܵ����ݡ��Լ���ataΪtbc ���߿ո������
+ '20/07/2020 ����������6�� ����ata�������У��ų�SAV Phone����
+ '28/0/2020 ��debug1�����ɵ�sheet ata�� ǰ������ݲ��������μ��������Ų�
+ '09/09/2020 ����������7����ataΪtbc������û�ʹ����eta�ѳ���ataǰ�����ܵģ�����
+ '13/10/2020 ����������8��eta���ܺ����ܣ�����ûȷ���ʹataΪtbc����ɫ
+ '13/11/2020 ������9�������� ������7 8�� ���½��ļ��������� week��
+ '27/11/2020 ���޸�10���޸��˸������۵���ɫ
+ '26/04/2021 ����������11���޸���������wwΪ�ж����ڵ�bug��2020���2021�겻ͬ���ͬ���������ֿ�
+ '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+'����̶��ǵ�����client�������Բ�ɾ��ԭ����l�̶�����3
+'l = InputBox("��������Ҫ�����з֣�")
+l = 3
+
+'0. �ѳ��˵�һ�����ݱ�֮��Ķ�ɾ��-----------------------------------------
+Application.DisplayAlerts = False
+'��ɾ��֮ǰ�ǵðѾ���ص�
+
+For Each sht1 In Sheets
+        If sht1.Name <> "TRACKING FR" Then
+            sht1.Delete
+        End If
+Next
+
+Application.DisplayAlerts = True
+'ɾ����ǵðѾ������´�------------------------------------------------------
+
+
+Irow = Sheet1.Range("a65536").End(xlUp).Row
+
+'1.���ϱ���������ѡ���У����ɱ���
+For i = 2 To Irow
+    k = 0
+    'k�ظ���0��
+    'k =1��������Ϊһ����ֹ�������k=1��ô�ñ��Ѿ�����
+    
+    If Sheet1.Cells(i, l) = "CAMELEON" Or Sheet1.Cells(i, l) = "QDOS" Or Sheet1.Cells(i, l) = "HighcoData" Or Sheet1.Cells(i, l) = "OPPO" _
+    Or Sheet1.Cells(i, l) = "SAV Phone" Or Sheet1.Cells(i, l) = "Suisse" Or Sheet1.Cells(i, l) = "SFR Caraibe" Or Sheet1.Cells(i, l) = "Atmosphere" Then
+       k = 1
+    End If
+    '����������4�����ǿ�����kΪ��ֹ������ֹһЩ�ͻ������ɱ���
+    
+    
+
+'%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    '�������ѵ�1���������¹�������
+    '��Ҫ�ų����հ׸�Ŀ����ԣ������޷��½���,�ؼ���������ж��Ƿ��ǿհ׸�����ʦ�������ж��ǹ����X*X���񣬱��������һ�о���ѡ���е����һ�У��������ڿո�
+    'Ȼ�ںܶ�ʵ�ʹ�������£�����������пո���ԭ�����ж����� sht.Name = Sheet1.Cells(i, l) ���������ˡ� ��ôʵ����������������Ҫ�жϵ�������
+    '1. �����ɵı����� �� �����е� ͬ��������ֹ�����ܽ���ֹ��Ӧ�ý��������ã�
+    '2.������ ����Ϊ�ո�  ����Ҳ���� ���ɱ���
+'%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    For Each sht In Sheets
+        If Len(Trim(Sheet1.Cells(i, l))) = 0 Then
+            k = 1
+            ElseIf sht.Name = Sheet1.Cells(i, l) Then
+                k = 1
+        End If
+    Next
+    
+    '����ñ�û�����ɣ���ô��������
+    'ͬʱע����blank�հ׸���Ҫ�ų����հ׸�Ŀ����ԣ������޷��½���
+     '��ֵ��V��������K����ֵϵͳ�Ƿ�ɹ�
+     '��v�к�w�С��ǲ����У����²�����Ϊ
+    'Sheet1.Range("v" & i) = k
+    'If Len(Trim(Sheet1.Cells(i, l))) = 0 Then
+     '   Sheet1.Range("w" & i) = "�ո�"
+      '  Else
+       ' Sheet1.Range("w" & i) = "���ǿո�"
+    'End If
+    
+'%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    '�������ѵ�2������� �� �ٿ� �����𣬺Ͳ��Ҽ�Ӧ�Է�ʽ
+    '06/19 ԭ��
+    '��λ����ҵı�������:
+    '�����ö�λ�����������λ��ֵ��ʱ��ʵ��������EXCELȥ��λ�յ�Ԫ��
+    '�����ò���������������ҿ�ֵ��ʱ��ʵ��������EXCELȥ�������ݡ�
+    '�����ٿ�:
+    'һ����Ԫ������ʲô����¼�룬����¼�����ɾ���ˣ�������ʲô��û�У����ǳ���Ϊ����ա���Ԫ��
+    '���һ����ʽ����������ԭ�򣨹�ʽ��ת��ȣ������˿��ı����������ı���������ճ��֮�����ֵҲ�ǿյģ���Ȼ�����ǿյĵ���ʵ�����ǡ��������ǳ��������Ϊ�����ٿա���
+
+    '��λ�ᶨλ����ա�
+    '���һ���ҡ��ٿա�
+
+    '������취��
+    'ͨ������ʵ���ҷ����ж��Ƿ�Ϊ��� ʮ�����ѡ� ="" ���� isempty�������жϼٿ�
+    '��ȫѡ�滻/delete�����ܳɹ����ٿ��滻Ϊ���
+    'Ŀǰ��ð취 len��trim������ =0
+    'trim��ɾ���ַ�������ո�
+    'len�������ַ����ַ���
+    
+    
+'%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    If k = 0 Then
+        Sheets.Add after:=Sheets(Sheets.Count)
+        Sheets(Sheets.Count).Name = Sheet1.Cells(i, l)
+    End If
+    
+    
+    
+Next
+'�ļ�ԭ����һЩ���⣺
+'1.sheet�½����ֲ������� / �ȷ�������client����Ҳ�������з���
+
+
+
+
+'%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  '���嵱ǰ�����Լ���ǰ���� ������
+                ThisWeek = Format(Date, "yyyyww")
+                LastWeek = Format(Date - 7, "yyyyww")
+                NextWeek = Format(Date + 7, "yyyyww")
+                Next2Week = Format(Date + 14, "yyyyww")
+
+
+'MsgBox (Val(Format(Cells(i, Ata), "ww")))
+
+
+'2.ɸѡ�������ݵ�������Ҫ�����ݲ����ı�����ɸѡ
+    'z ��������ѭ�� z�Ǵ�1��12ѭ��
+
+    For j = 2 To Sheets.Count
+        Sheet1.Range("a1:u" & Irow).AutoFilter Field:=l, Criteria1:=Sheets(j).Name
+        'Criteria1 ���������1 ������ĸ������
+        
+        Sheet1.Range("a1:u" & Irow).Copy Sheets(j).Range("a1")
+        '�ڽ���ѡ��ɵĽ��ճ��������ѡ������ͬ�Ĺ�������
+        
+                '���ɱ�������±������Ĳ���
+                
+                '��һ�� ��ɾ��������Ϣ��
+                Sheets(j).Select
+                ActiveSheet.Range("K:K,L:L,M:M,O:O,R:R,S:S,T:T,U:U,V:V,I:I").Select
+                Selection.Interior.Color = "65534"
+                '���������ɾ��ǰ���ڲ��Ա�ɾ����
+                Selection.Delete 'Shift:=xlToLeft
+                '�������ѵ�3�������� Sheets(j).Select ��ѡ��ÿ�����ɵı����ٽ��в���
+                '������ 07/02��������I��ɾ���� batch
+                
+                
+                '�ڶ��� ��ÿһ����ȿ����Լ�ȥ��ԭ���ĵ����߰������ɫ
+                ActiveSheet.Range("A1:M80").EntireColumn.AutoFit
+                'ѡ���г�������
+                ActiveSheet.Range("a2:u" & Irow).Interior.Pattern = xlNone
+                
+                
+                
+                Yrow = ActiveSheet.Range("a65536").End(xlUp).Row
+                '���嵱ǰ������
+                 
+                
+        
+                
+                
+                '���� ata eta��������
+                Ata = 12
+                Eta = 11
+                
+                
+                         '������ ����7 8����PO������ɫ����
+                        '1. ����ɫ�� PO ���ڣ�eta�����ڣ������������ܣ����ڽ��е�
+                        '2. ����ɫ�� PO ���ڣ�eta�����ڣ������������ܣ���ɵ�
+                        '3. ����ɫ�� PO ����eta������ ���� δ�ʹ��
+                        '4. ����ɫ�� PO ��δ ����eta������ ata ���Ѿ�¼��ϵͳ trackingfile
+                        '5. �� ɾ���� PO ata �Ѿ��ʹ� �ҳ�������
+                        
+                    
+                    
+                        For i = Yrow To 2 Step -1
+                        'ѭ��ɾ����ע�����㣺1Ҫ�Ӻ���ǰ����ѭ����2for�����Ҫ�ǵ�step -1
+                            
+                            '��ע�⣡�������ж�δ�ʹ������� tbc ���۴�Сд ���ո� ����� �� �ٿ� ��
+                            'UCase(Cells(i, Ata)) = "TBC" And Len(Trim(Cells(i, Ata)))=0
+                            
+                            
+                         'Cells(i, 13) = Val(Format(Cells(i, Ata), "yyyyww")) - Val(Format(Cells(i, Eta), "yyyyww"))
+                        '�������С����������һ����ʾʵ��������
+                        
+                                '������8��eta���ܺ����ܣ�����ûȷ���ʹataΪtbc ���� ata Ϊ�ո񣬱�ɫ
+                                '1. ����ɫ�� PO ���ڣ������ڣ������������ܣ����ڽ��е�
+                                
+                                    If Abs(Val(Format(Date, "yyyyww")) - Val(Format(Cells(i, Eta), "yyyyww"))) <= 2 Then
+                                        
+                                        If (UCase(Cells(i, Ata)) = "TBC" Or Len(Trim(Cells(i, Ata))) = 0) Then
+                                  
+                                           For z = 1 To 12 Step 1
+                                    
+                                               Cells(i, z).Interior.Color = RGB(0, 140, 255)
+                                       
+                                           Next
+                                            '�����۽Ƕȣ��������б�ɫ��ֻ��Ҫ��1��12�б���ɫ
+                                            'eta�������ڣ�δ��ɱ����ɫ
+                                            
+                                        Else
+                                            
+                                            For z = 1 To 12 Step 1
+                                
+                                            Cells(i, z).Interior.Color = RGB(144, 238, 144)
+                                            'eta�������ڣ���ɱ����ɫ
+                                   
+                                            Next
+                                            
+                                            
+                                        End If
+                    
+                                    End If
+                        
+                        
+                                '������7��
+                                    If (UCase(Cells(i, Ata)) = "TBC" Or (Trim(Cells(i, Ata))) = 0) And UCase(Cells(i, Eta)) <> "TBC" And Abs(Val(Format(Date, "yyyyww")) - Val(Format(Cells(i, Eta), "yyyyww"))) >= 3 Then
+                                        
+                                        For z = 1 To 12 Step 1
+                                            
+                                            Cells(i, z).Interior.Color = RGB(240, 128, 128)
+                                        
+                                        Next
+                                            
+                                    End If
+                                        '��������
+                                        '1. ATA is TBS �Լ� �ո� , ETA is not TBC, Ҳ����˵ETA�Ѷ�������û�ʹ�
+                                        '2.ETA����Ŀǰʱ�����ܣ�Ҳ����˵����1�Ѿ�����2����
+                                        '���ʼǡ� ucase���� �������ַ���ɴ�д����˱Ƚ�ʱ�Ͳ���©��Сдtbc��������tbc�жϵ���䶼Ҫ����ucase
+                                        
+                            
+                        
+                        
+                        
+                            If Abs(ThisWeek - Val(Format(Cells(i, Ata), "yyyyww"))) >= 2 And Cells(i, Ata) <> "TBC" And Len(Trim(Cells(i, Ata))) <> 0 Then
+                                
+                                'ATA ��Ŀǰ�ܣ��������� �������ܣ�����tbc�����ǿո��ɾ����
+                                'ʵ���У�������������Ƿ�ɹ�ѡ����Ҫɾ����
+                                 Cells(i, Ata).EntireRow.Interior.Color = "65534"
+                                 '�����аѱ�Ƶ���ɾ����Ϊ�β�ֱ��ɾ����ֱ��ɾ�������ٵ����е���
+                                 Cells(i, Ata).EntireRow.Delete
+                                 
+                                 
+                            End If
+                            
+                            
+        
+                            
+                        Next
+            
+
+        
+           
+       '����������4�� ��ֹ����Ҫ�Ŀͻ��Լ�tracking file��ʡ���ɱ���
+        
+    
+        '����������5�����ױ��������ܵ����ݡ��Լ���ataΪtbc ���߿ո������
+        
+        
+       'End With
+     '20/07/2020 ����������6�� ����ata�������У��ų�SAV Phone����
+      '28/0/2020 ��debug1�����ɵ�sheet ata�� ǰ������ݲ��������μ��������Ų�,���Ų鵽����ata��������ʱ���ظ���������ȥ����һ����
+      
+    
+        'ȫ���������ˣ������ǻָ�ԭ��
+        ActiveSheet.Range("a1").Select
+   
+       
+        
+        '���һ������ �����а�����ɫ����
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                        Selection.AutoFilter
+                        ActiveSheet.AutoFilter.Sort.SortFields.Clear
+                        ActiveSheet.AutoFilter.Sort.SortFields.Add(Range( _
+                            "L:L"), xlSortOnCellColor, xlAscending, , xlSortNormal).SortOnValue.Color = _
+                            RGB(144, 238, 144)
+                        With ActiveSheet.AutoFilter.Sort
+                            .Header = xlYes
+                            .MatchCase = False
+                            .Orientation = xlTopToBottom
+                            .SortMethod = xlPinYin
+                            .Apply
+                         End With
+
+        
+        Sheet1.ShowAllData
+
+        '�ѱ���1�Ĵ�ɸѡģʽȡ��
+
+    Next
+
+'����������ǰ����Ǵ���ѡ�񵽵�һ�ű�����Ϊ������Ĭ��active�����һ�����ɵı�
+'Ȼ���ٵ�������ʹ�������ǲ�������
+      
+
+
+
+Sheet1.Select
+Dim x  As String
+x = Sheet1.Cells(1, l)
+MsgBox "The corresponding worksheet has been generated based on the customer name"
+ 
+ 
+
+ 
+End Sub
+
+Sub Restore()
+Application.DisplayAlerts = False
+'��ɾ��֮ǰ�ǵðѾ���ص�
+
+For Each sht1 In Sheets
+        If sht1.Name <> "TRACKING FR" Then
+            sht1.Delete
+        End If
+Next
+
+Application.DisplayAlerts = True
+'ɾ����ǵðѾ����
+End Sub
+
+Sub SEPT2_GeneratedPorteFeuilleForClient()
+Dim sht As Worksheet
+Dim Filepath As String  '��һ��·�������������ļ���
+Dim Filepath2 As String '�ڶ���·�������ڽ��ļ��洢���һ�����ɵ��ļ�����
+
+
+Filepath = ThisWorkbook.Path
+'���õ�ǰ�ļ���λ��
+
+'����������1����ͬĿ¼����������Ϊ ��PortefeuillePourClient + data�����ļ���
+'������Ҫ������ļ����Ƿ��Ѿ�����
+    If Dir(Filepath & "\PortefeuillePourClient" & Format(Now(), "_yyyymmdd"), vbDirectory) = "" Then
+        
+         MkDir Filepath & "\PortefeuillePourClient" & Format(Now(), "_yyyymmdd")
+         'Filepath2 = Dir(Filepath & "\PortefeuillePourClient" & Format(Now(), "yyyymmdd"))
+         '��������ڡ���ô���½��ļ��У��ٻ�ȡ·��
+         
+         'Else
+        ' Filepath2 = Dir(Filepath & "\PortefeuillePourClient" & Format(Now(), "yyyymmdd"))
+         '����Ѵ��ڴ��ļ��У���ô��ȡ·��
+    End If
+    
+    Filepath2 = Filepath & "\PortefeuillePourClient" & Format(Now(), "_yyyymmdd")
+    '��֪��Ϊʲôʹ��dir��ȡ·��ʧ�ܣ�Ȼ��ֱ��ʹ�ñ���ƴ�Ӿ��ܳɹ���ȡ��Ӧ·����ǰ����˰��죬����ɵ��
+    MsgBox Filepath2
+    
+'-------------------------------------------------------------------------
+ '�㲻��ͬʱ�����ļ�������Ҫ������ļ�������������Ҫ��ȡ�ĵ������ɵ��ļ��е�·�� Filepath2
+'����Ѵ��ڴ��ļ��У���ô��ȡ·��
+'��������ڡ���ô���½��ļ��У��ٻ�ȡ·��
+
+
+
+For Each sht In Sheets
+
+    k = 0
+    '��ԭ��ֹ��
+    Krow = sht.Range("a65536").End(xlUp).Row
+    '����Ҳ����ֹ���������������Ҳ����Ҫ����
+    
+    If sht.Name = "TRACKING FR" Or Krow < 2 Then
+    
+        k = 1
+        
+    End If
+    'k =1 ��������Ϊ��ֹ��
+    
+    If k = 0 Then
+    
+        sht.Copy
+        'ActiveWorkbook.SaveAs Filename:="g:\data\ " & sht.Name & ".xlsx"
+         '��Ϊԭ���룬�̶�������g:\data �ļ�������
+         '��������Ҫ�����ڵ�ǰ�ļ���
+        
+        '����������2���㲻��ͬʱ�����ļ�������Ҫ������ļ�������������Ҫ��ȡ�ĵ������ɵ��ļ��е�·��Filepath2
+    
+        ActiveWorkbook.SaveAs Filename:=Filepath2 & "\" & sht.Name & " " & Format(Now(), "_yyyymmdd") & ".xlsx"
+        ActiveWorkbook.Close
+    
+    End If
+    
+Next
+
+'MsgBox " Fils costomes has been generated in folder PorteFeuilleForClient"
+    
+End Sub
+
+
+
+'Sub GetPath()
+'Filepath = ThisWorkbook.Path
+'MsgBox Filepath
+'MsgBox Filepath & "\" & "aabb" & ".xlsx"
+
+'End Sub
+
+Sub eclartDate()
+Dim i As Integer
+
+ Yrow = ActiveSheet.Range("a65536").End(xlUp).Row
+For i = 1 To Yrow
+
+
+    
+    If Format(Cells(i, 11), "yyyy - ww") = Format(Cells(i, 12), "yyyy - ww") Then
+      
+        Cells(i, 11).Interior.Color = "65534"
+    End If
+    
+  
+Next
+
+End Sub
+
+
+
+
+
+
+
