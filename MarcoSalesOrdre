@@ -4,7 +4,7 @@ Sub STEP1_SeparateClient()
 
 Dim sht As Worksheet
 Dim i, k, y, j As Integer
-Dim z As Integer ' z Ϊ����ѭ������
+Dim z As Integer 'z is the in-row circulation factor
 Dim Irow As Integer 'this is Number of rows
 Dim l As Integer 'this is the number of colonne you want filter
 Dim sht1 As Worksheet
