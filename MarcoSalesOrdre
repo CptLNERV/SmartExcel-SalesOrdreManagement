@@ -10,7 +10,7 @@ Dim l As Integer 'this is the number of colonne you want filter
 Dim sht1 As Worksheet
 Dim ThisWeek, LastWeek As String
 Dim Yrow As Integer
-Dim Ata, Eta As Integer '���ﶨ��ETA �� ATA������
+Dim Ata, Eta As Integer 'Here the number of columns of ETA and ATA is defined
 Dim AtaLastWeek
 
  '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
