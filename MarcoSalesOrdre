@@ -14,35 +14,33 @@ Dim Ata, Eta As Integer '���ﶨ��ETA �� ATA������
 Dim AtaLastWeek
 
  '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
- 
- '������־:
- '15/06/2020 �������ѵ�1���и�����ͻ����֣����淶�������Ҳ������ڣ�����/ ���ŵ��޷����������֣���Ҫ�ں�����ǰ�淶����
- '18/06/2020 ������Ҫ���µĹ��ܣ��������sheet������ԭ�ļ���ô���У���Ҫ������֮ǰ�Ѷ�����ɾ��  `
- '19/06/2020 �Ѿ�����������ѵ�2�� ʹ��len(trim())=0 ���ж��Ƿ�Ϊ���
- '20/06/2020 ����������1����ͬĿ¼����������Ϊ ��PortefeuillePourClient + data�����ļ���
- '20/06/2020 ����������2�������ɵĿͻ��ļ�����ڡ�PortefeuillePourClient + data���������+data
- '28/06/2020 �������ѵ�3�� ��Ҫ������ҳ����и��������Ȼ�������޷�ѡ������ҳ�棬�������Sheets(j).Select�ɹ�������Դ����ƻ����Խ��и������
- '28/06/2020 ����������3�����������屾�����С�
- '30/06/2020 ����������4�� ��ֹ����Ҫ�Ŀͻ��Լ�tracking file��ʡ���ɱ���
- '06/07/2020 ����������5�� ��������ata�����ܵ����ݡ��Լ���ataΪtbc ���߿ո������
- '20/07/2020 ����������6�� ����ata�������У��ų�SAV Phone����
- '28/0/2020 ��debug1�����ɵ�sheet ata�� ǰ������ݲ��������μ��������Ų�
- '09/09/2020 ����������7����ataΪtbc������û�ʹ����eta�ѳ���ataǰ�����ܵģ�����
- '13/10/2020 ����������8��eta���ܺ����ܣ�����ûȷ���ʹataΪtbc����ɫ
- '13/11/2020 ������9�������� ������7 8�� ���½��ļ��������� week��
- '27/11/2020 ���޸�10���޸��˸������۵���ɫ
- '26/04/2021 ����������11���޸���������wwΪ�ж����ڵ�bug��2020���2021�겻ͬ���ͬ���������ֿ�
+ '15/06/2020 [Development difficulty 1] There is an individual customer name that is not standardized, including and not limited to: the existence of / symbols and other names that cannot be named, need to standardize the naming before the macro runs
+ '18/06/2020 Now we need to add a new function: the sorted sheet can't have as many columns as the original file, we need to delete the extra columns before sorting is finished `
+ '19/06/2020 Solved [development difficulty 2] Use len(trim())=0 to determine if it is a vacuum
+ '20/06/2020 [New requirement 1] Create a folder named [PortefeuillePourClient + data] in the same directory
+ '20/06/2020 [New requirement 2] Store the generated client files in [PortefeuillePourClient + data] and name it + data
+ '28/06/2020 [Development Difficulty 3] Need to generate pages again for more operations. However, the code could not select the generated page, and finally adding Sheets(j).Select successfully solved it. And so on for more operations
+ '28/06/2020 [New requirement 3] Highlight, bold this week's row.
+ '30/06/2020 [New requirement 4] Block unwanted customers as well as tracking file this province to generate table
+ '06/07/2020 [New Requirement 5] Keep only data from ata for the last two weeks. and data in ata for tbc or spaces
+ '20/07/2020 [New requirement 6] Sort by ata date, exclude SAV Phone tables
+ '28/0/2020 [debug1] The generated sheet ata does not match the previous data. Add comments paragraph by paragraph to troubleshoot
+ '09/09/2020 [add requirement 7] in ata for tbc (i.e. not yet delivered) but eta has been over two weeks before and after ata, highlight
+ '13/10/2020 [New demand 8] eta this week and last week, but not yet confirmed delivery, ata for tbc, table colour
+ '13/11/2020 [update 9] integrated [requirement 7 8] added week number to new file name
+ '27/11/2020 [Revision 10] Changed to a less harsh colour
+ '26/04/2021 [New requirement 11] Modified the bug of using week number ww as the judgment date, 2020 and 2021 different years with the same number of weeks to distinguish
+
  '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-
-'����̶��ǵ�����client�������Բ�ɾ��ԭ����l�̶�����3
-'l = InputBox("��������Ҫ�����з֣�")
+'Here the fix is the third line client, and we take the principle of no deletion and let l be fixed equal to 3
+'l = InputBox("Please enter which column you would like to divide by")
 l = 3
 
-'0. �ѳ��˵�һ�����ݱ�֮��Ķ�ɾ��-----------------------------------------
+'Delete all but the first data sheet ------------------------------------------
 Application.DisplayAlerts = False
-'��ɾ��֮ǰ�ǵðѾ���ص�
+'Remember to turn off the warning before deleting the table
 
 For Each sht1 In Sheets
         If sht1.Name <> "TRACKING FR" Then
@@ -51,31 +49,31 @@ For Each sht1 In Sheets
 Next
 
 Application.DisplayAlerts = True
-'ɾ����ǵðѾ������´�------------------------------------------------------
+'Remember to turn the warning back on after deleting the table------------------------------------------------------
 
 
 Irow = Sheet1.Range("a65536").End(xlUp).Row
 
-'1.���ϱ���������ѡ���У����ɱ���
+'1.Integrate the table and generate this column based on the selected column
 For i = 2 To Irow
     k = 0
-    'k�ظ���0��
-    'k =1��������Ϊһ����ֹ�������k=1��ô�ñ��Ѿ�����
+    'Reply to 0
+    'k = 1 is used here as a terminator, if k = 1 then the table has been generated
     
     If Sheet1.Cells(i, l) = "CAMELEON" Or Sheet1.Cells(i, l) = "QDOS" Or Sheet1.Cells(i, l) = "HighcoData" Or Sheet1.Cells(i, l) = "OPPO" _
     Or Sheet1.Cells(i, l) = "SAV Phone" Or Sheet1.Cells(i, l) = "Suisse" Or Sheet1.Cells(i, l) = "SFR Caraibe" Or Sheet1.Cells(i, l) = "Atmosphere" Then
        k = 1
     End If
-    '����������4�����ǿ�����kΪ��ֹ������ֹһЩ�ͻ������ɱ���
+    '[New requirement 4] We can block some client names from generating tables with k as the terminator
     
     
 
 '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    '�������ѵ�1���������¹�������
-    '��Ҫ�ų����հ׸�Ŀ����ԣ������޷��½���,�ؼ���������ж��Ƿ��ǿհ׸�����ʦ�������ж��ǹ����X*X���񣬱��������һ�о���ѡ���е����һ�У��������ڿո�
-    'Ȼ�ںܶ�ʵ�ʹ�������£�����������пո���ԭ�����ж����� sht.Name = Sheet1.Cells(i, l) ���������ˡ� ��ôʵ����������������Ҫ�жϵ�������
-    '1. �����ɵı����� �� �����е� ͬ��������ֹ�����ܽ���ֹ��Ӧ�ý��������ã�
-    '2.������ ����Ϊ�ո�  ����Ҳ���� ���ɱ���
+    '[Development Difficulty 1]: generate a new worksheet
+    'need to exclude the possibility of blank cells, otherwise it is impossible to create a new table, the key is in how to determine whether it is blank cells, Mr. Pei's example are the rules of the X * X table, the table is the next to the last column of the selection column, that is, there is no space
+    'However, in many practical work situations, for example, there will be spaces here. Then the original judgement condition sht.Name = Sheet1.Cells(i, l) cannot be satisfied. So there are actually two conditions to be judged here:
+    '1. the generated table cannot have the same name as the classified column or it will be terminated (you can't call it terminated, it would be better to call it skipped)
+    '2. The category column cannot be a space, otherwise the generated table is also skipped
 '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     For Each sht In Sheets
@@ -86,37 +84,37 @@ For i = 2 To Irow
         End If
     Next
     
-    '����ñ�û�����ɣ���ô��������
-    'ͬʱע����blank�հ׸���Ҫ�ų����հ׸�Ŀ����ԣ������޷��½���
-     '��ֵ��V��������K����ֵϵͳ�Ƿ�ɹ�
-     '��v�к�w�С��ǲ����У����²�����Ϊ
+    'If the table is not generated, then the following is generated
+    'Also note that there are blank cells, which need to be eliminated or the new table cannot be created
+     'Assign a value to column V to test the success of the threshold system for K
+     ' [v and w columns] is the test column, the following test behavior
     'Sheet1.Range("v" & i) = k
     'If Len(Trim(Sheet1.Cells(i, l))) = 0 Then
-     '   Sheet1.Range("w" & i) = "�ո�"
+     '   Sheet1.Range("w" & i) = "Space"
       '  Else
-       ' Sheet1.Range("w" & i) = "���ǿո�"
+       ' Sheet1.Range("w" & i) = "Not a space"
     'End If
     
 '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-    '�������ѵ�2������� �� �ٿ� �����𣬺Ͳ��Ҽ�Ӧ�Է�ʽ
-    '06/19 ԭ��
-    '��λ����ҵı�������:
-    '�����ö�λ�����������λ��ֵ��ʱ��ʵ��������EXCELȥ��λ�յ�Ԫ��
-    '�����ò���������������ҿ�ֵ��ʱ��ʵ��������EXCELȥ�������ݡ�
-    '�����ٿ�:
-    'һ����Ԫ������ʲô����¼�룬����¼�����ɾ���ˣ�������ʲô��û�У����ǳ���Ϊ����ա���Ԫ��
-    '���һ����ʽ����������ԭ�򣨹�ʽ��ת��ȣ������˿��ı����������ı���������ճ��֮�����ֵҲ�ǿյģ���Ȼ�����ǿյĵ���ʵ�����ǡ��������ǳ��������Ϊ�����ٿա���
 
-    '��λ�ᶨλ����ա�
-    '���һ���ҡ��ٿա�
+    '[Development Difficulty 2]: The difference between vacuum and false void, and ways to find and cope with them
+    '06/19 Reason:
+    'The essential difference between locate and find .
+    'when you use the condition to locate the empty value, in fact, let EXCEL to locate the empty cell.
+    'and you use this condition to find the empty value when you actually let EXCEL to find the data.
+    'vacuum and false null .
+    'a cell, we do not enter anything, or enter and then delete, then it is nothing, we call it a "vacuum" cell.
+    'If a formula we produce empty text for various reasons (formula, escape, etc.), such text is also empty after copying and pasting the value, although it looks empty but is actually "", we call this situation: "false empty".
 
-    '������취��
-    'ͨ������ʵ���ҷ����ж��Ƿ�Ϊ��� ʮ�����ѡ� ="" ���� isempty�������жϼٿ�
-    '��ȫѡ�滻/delete�����ܳɹ����ٿ��滻Ϊ���
-    'Ŀǰ��ð취 len��trim������ =0
-    'trim��ɾ���ַ�������ո�
-    'len�������ַ����ַ���
+    'Locate will locate "vacuum"
+    'Find will find "false empty"
+
+    ' [Solution].
+    'Through various experiments I have found it very difficult to determine if it is a vacuum. ="" or isempty are only able to determine a false void
+    'and neither replace all/delete succeeds in replacing a false void with a vacuum
+    'The best solution for now is len(trim()) = 0
+    'trim: remove spaces on both sides of the string
+    'len: return the number of characters in the string
     
     
 '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -128,14 +126,14 @@ For i = 2 To Irow
     
     
 Next
-'�ļ�ԭ����һЩ���⣺
-'1.sheet�½����ֲ������� / �ȷ�������client����Ҳ�������з���
+'The file originally had a number of problems:
+'1. The new name of the sheet must not have symbols such as /, so the client name must not have symbols either
 
 
 
 
 '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  '���嵱ǰ�����Լ���ǰ���� ������
+  'Define the current week number and, previous week number Next week number
                 ThisWeek = Format(Date, "yyyyww")
                 LastWeek = Format(Date - 7, "yyyyww")
                 NextWeek = Format(Date + 7, "yyyyww")
@@ -145,68 +143,68 @@ Next
 'MsgBox (Val(Format(Cells(i, Ata), "ww")))
 
 
-'2.ɸѡ�������ݵ�������Ҫ�����ݲ����ı�����ɸѡ
-    'z ��������ѭ�� z�Ǵ�1��12ѭ��
+'2.Filtering copies of data to tables, important: filter by the resulting table name
+    'z Used for in-line loops z is a loop from 1 to 12
 
     For j = 2 To Sheets.Count
         Sheet1.Range("a1:u" & Irow).AutoFilter Field:=l, Criteria1:=Sheets(j).Name
-        'Criteria1 ���������1 ������ĸ������
+        'Criteria1
         
         Sheet1.Range("a1:u" & Irow).Copy Sheets(j).Range("a1")
-        '�ڽ���ѡ��ɵĽ��ճ��������ѡ������ͬ�Ĺ�������
+        'After pasting the completed results into a worksheet with the same conditions as the selection
         
-                '���ɱ�������±������Ĳ���
+                'Operations done in the new table after generating the table
                 
-                '��һ�� ��ɾ��������Ϣ��
+                'Step 1 Delete the redundant message lines first
                 Sheets(j).Select
                 ActiveSheet.Range("K:K,L:L,M:M,O:O,R:R,S:S,T:T,U:U,V:V,I:I").Select
                 Selection.Interior.Color = "65534"
-                '���������ɾ��ǰ���ڲ��Ա�ɾ����
+                'Marker bar, used to test deleted items before deletion
                 Selection.Delete 'Shift:=xlToLeft
-                '�������ѵ�3�������� Sheets(j).Select ��ѡ��ÿ�����ɵı����ٽ��в���
-                '������ 07/02��������I��ɾ���� batch
+                '[Development Difficulty 3] Added Sheets(j).Select to select each generated form for further manipulation
+                '[Updated 07/02] Added I column delete item batch
                 
                 
-                '�ڶ��� ��ÿһ����ȿ����Լ�ȥ��ԭ���ĵ����߰������ɫ
+                'Step 2 Equalise the width of each cell and remove any messy colours
                 ActiveSheet.Range("A1:M80").EntireColumn.AutoFit
-                'ѡ���г�������
+                'Selected column length adaptation
                 ActiveSheet.Range("a2:u" & Irow).Interior.Pattern = xlNone
                 
                 
                 
                 Yrow = ActiveSheet.Range("a65536").End(xlUp).Row
-                '���嵱ǰ������
+                'Define the current total number of rows
                  
                 
         
                 
                 
-                '���� ata eta��������
+                'Define the number of columns in which ata eta is located
                 Ata = 12
                 Eta = 11
                 
                 
-                         '������ ����7 8����PO������ɫ����
-                        '1. ����ɫ�� PO ���ڣ�eta�����ڣ������������ܣ����ڽ��е�
-                        '2. ����ɫ�� PO ���ڣ�eta�����ڣ������������ܣ���ɵ�
-                        '3. ����ɫ�� PO ����eta������ ���� δ�ʹ��
-                        '4. ����ɫ�� PO ��δ ����eta������ ata ���Ѿ�¼��ϵͳ trackingfile
-                        '5. �� ɾ���� PO ata �Ѿ��ʹ� �ҳ�������
+                        '[Consolidation Demand 7 8] on PO classification according to colour
+                        '1. [Blue] PO recently (within eta two weeks, this week last week next week) in progress
+                        '2. [Green] PO recently (within two weeks of eta, this week last week next week) completed
+                        '3. [Yellow] PO already has eta, not delivered for more than 2 weeks
+                        '4. [No colour] PO not yet scheduled for eta, let alone ata, but has been entered into the system trackingfile
+                        '5. [Deleted] PO ata has been delivered for more than 2 weeks
                         
                     
                     
                         For i = Yrow To 2 Step -1
-                        'ѭ��ɾ����ע�����㣺1Ҫ�Ӻ���ǰ����ѭ����2for�����Ҫ�ǵ�step -1
+                         'Loop to delete rows note two things: 1 to reverse the loop from back to front, 2 to remember step -1 in the for statement
                             
-                            '��ע�⣡�������ж�δ�ʹ������� tbc ���۴�Сд ���ո� ����� �� �ٿ� ��
+                            'Note!!!] There are two points to determine undelivered tbc regardless of case, spaces (vacuum and false space)
                             'UCase(Cells(i, Ata)) = "TBC" And Len(Trim(Cells(i, Ata)))=0
                             
                             
                          'Cells(i, 13) = Val(Format(Cells(i, Ata), "yyyyww")) - Val(Format(Cells(i, Eta), "yyyyww"))
-                        '�������С����������һ����ʾʵ��������
+                        '[Test column] never shows the actual week difference again in the last column
                         
-                                '������8��eta���ܺ����ܣ�����ûȷ���ʹataΪtbc ���� ata Ϊ�ո񣬱�ɫ
-                                '1. ����ɫ�� PO ���ڣ������ڣ������������ܣ����ڽ��е�
+                                '[Requirement 8] eta this week and last week, but delivery not yet confirmed, ata for tbc or ata for space, colour coding
+                                '1. [Blue] PO Recent (within two weeks, this week last week next week) Ongoing
                                 
                                     If Abs(Val(Format(Date, "yyyyww")) - Val(Format(Cells(i, Eta), "yyyyww"))) <= 2 Then
                                         
@@ -217,15 +215,15 @@ Next
                                                Cells(i, z).Interior.Color = RGB(0, 140, 255)
                                        
                                            Next
-                                            '�����۽Ƕȣ��������б�ɫ��ֻ��Ҫ��1��12�б���ɫ
-                                            'eta�������ڣ�δ��ɱ����ɫ
+                                            'From an aesthetic point of view, it is not necessary to change the colour of the whole row, but only to columns 1 to 12 to turn blue
+                                            'eta in a fortnight, unfinished to blue
                                             
                                         Else
                                             
                                             For z = 1 To 12 Step 1
                                 
                                             Cells(i, z).Interior.Color = RGB(144, 238, 144)
-                                            'eta�������ڣ���ɱ����ɫ
+                                            'eta in a fortnight, finish turning green
                                    
                                             Next
                                             
@@ -235,7 +233,7 @@ Next
                                     End If
                         
                         
-                                '������7��
+                                '[Demand 7].
                                     If (UCase(Cells(i, Ata)) = "TBC" Or (Trim(Cells(i, Ata))) = 0) And UCase(Cells(i, Eta)) <> "TBC" And Abs(Val(Format(Date, "yyyyww")) - Val(Format(Cells(i, Eta), "yyyyww"))) >= 3 Then
                                         
                                         For z = 1 To 12 Step 1
@@ -245,10 +243,10 @@ Next
                                         Next
                                             
                                     End If
-                                        '��������
-                                        '1. ATA is TBS �Լ� �ո� , ETA is not TBC, Ҳ����˵ETA�Ѷ�������û�ʹ�
-                                        '2.ETA����Ŀǰʱ�����ܣ�Ҳ����˵����1�Ѿ�����2����
-                                        '���ʼǡ� ucase���� �������ַ���ɴ�д����˱Ƚ�ʱ�Ͳ���©��Сдtbc��������tbc�жϵ���䶼Ҫ����ucase
+                                           ' Highlighted conditions
+                                        '1. ATA is TBS and a blank , ETA is not TBC, which means that ETA has been ordered but not yet delivered
+                                        '2. ETA is two weeks past the current time, which means condition 1 is more than 2 weeks old
+                                        ' [Notes] The ucase function turns all characters into upper case so that lower case tbc is not missed when comparing, and all statements judged with tbc have to be added to ucase
                                         
                             
                         
@@ -256,10 +254,10 @@ Next
                         
                             If Abs(ThisWeek - Val(Format(Cells(i, Ata), "yyyyww"))) >= 2 And Cells(i, Ata) <> "TBC" And Len(Trim(Cells(i, Ata))) <> 0 Then
                                 
-                                'ATA ��Ŀǰ�ܣ��������� �������ܣ�����tbc�����ǿո��ɾ����
-                                'ʵ���У�������������Ƿ�ɹ�ѡ����Ҫɾ����
+                                'ATA Delete if current week, or last week or last week, not tbc, not spaces.
+                                'Experimental row to distinguish whether highlighting is successful in selecting the item to be deleted
                                  Cells(i, Ata).EntireRow.Interior.Color = "65534"
-                                 '�����аѱ�Ƶ���ɾ����Ϊ�β�ֱ��ɾ����ֱ��ɾ�������ٵ����е���
+                                 'Delete the row marked yellow in this row. Why not just delete it: direct deletion is hard to debug in debug again
                                  Cells(i, Ata).EntireRow.Delete
                                  
                                  
@@ -273,23 +271,23 @@ Next
 
         
            
-       '����������4�� ��ֹ����Ҫ�Ŀͻ��Լ�tracking file��ʡ���ɱ���
+       '[New Requirement 4] Block unwanted customers and tracking file to generate forms in this province
         
     
-        '����������5�����ױ��������ܵ����ݡ��Լ���ataΪtbc ���߿ո������
+       '[New requirement 5] Progressive retention of data for the last two weeks. and data in ata for tbc or spaces
         
         
        'End With
-     '20/07/2020 ����������6�� ����ata�������У��ų�SAV Phone����
-      '28/0/2020 ��debug1�����ɵ�sheet ata�� ǰ������ݲ��������μ��������Ų�,���Ų鵽����ata��������ʱ���ظ���������ȥ����һ����
+     '20/07/2020 【新增需求6】 按照ata日期排列，排除SAV Phone表格
+      '28/0/2020 【debug1】生成的sheet ata和 前面的数据不相符。逐段加入评论排查,在排查到按照ata日期排列时，回复正常，逐去除这一功能
       
     
-        'ȫ���������ˣ������ǻָ�ԭ��
+        ' 'It's all over, let's get back to business as usual
         ActiveSheet.Range("a1").Select
    
        
         
-        '���һ������ �����а�����ɫ����
+        'The final operation arranges the rows by colour
                     
                     
                     
@@ -317,8 +315,8 @@ Next
 
     Next
 
-'����������ǰ����Ǵ���ѡ�񵽵�һ�ű�����Ϊ������Ĭ��active�����һ�����ɵı�
-'Ȼ���ٵ�������ʹ�������ǲ�������
+'Finally at the end we select his wear table to the first table, because after processing the default active is in the last generated table
+'Then another pop-up tells the user that we are done with the operation
       
 
 
@@ -335,7 +333,7 @@ End Sub
 
 Sub Restore()
 Application.DisplayAlerts = False
-'��ɾ��֮ǰ�ǵðѾ���ص�
+'Remember to turn off the warning before deleting the table
 
 For Each sht1 In Sheets
         If sht1.Name <> "TRACKING FR" Then
@@ -344,64 +342,65 @@ For Each sht1 In Sheets
 Next
 
 Application.DisplayAlerts = True
-'ɾ����ǵðѾ����
+'Remember to turn on the warning after deleting the table
 End Sub
 
 Sub SEPT2_GeneratedPorteFeuilleForClient()
 Dim sht As Worksheet
-Dim Filepath As String  '��һ��·�������������ļ���
-Dim Filepath2 As String '�ڶ���·�������ڽ��ļ��洢���һ�����ɵ��ļ�����
+Dim Filepath As String  ' 'First level path for generating folders
+Dim Filepath2 As String 'Second layer path for storing files in the folder generated by the first layer
 
 
 Filepath = ThisWorkbook.Path
-'���õ�ǰ�ļ���λ��
+'Set the location of the current file
 
-'����������1����ͬĿ¼����������Ϊ ��PortefeuillePourClient + data�����ļ���
-'������Ҫ������ļ����Ƿ��Ѿ�����
+'[New requirement 1] Create a folder named [PortefeuillePourClient + data] in the same directory
+'First you need to check if the folder has been created
     If Dir(Filepath & "\PortefeuillePourClient" & Format(Now(), "_yyyymmdd"), vbDirectory) = "" Then
         
          MkDir Filepath & "\PortefeuillePourClient" & Format(Now(), "_yyyymmdd")
          'Filepath2 = Dir(Filepath & "\PortefeuillePourClient" & Format(Now(), "yyyymmdd"))
-         '��������ڡ���ô���½��ļ��У��ٻ�ȡ·��
+         'If it does not exist. Then, create a new folder and get the path again
          
          'Else
         ' Filepath2 = Dir(Filepath & "\PortefeuillePourClient" & Format(Now(), "yyyymmdd"))
-         '����Ѵ��ڴ��ļ��У���ô��ȡ·��
+         'If this folder already exists, then get the path
     End If
     
     Filepath2 = Filepath & "\PortefeuillePourClient" & Format(Now(), "_yyyymmdd")
-    '��֪��Ϊʲôʹ��dir��ȡ·��ʧ�ܣ�Ȼ��ֱ��ʹ�ñ���ƴ�Ӿ��ܳɹ���ȡ��Ӧ·����ǰ����˰��죬����ɵ��
+  
     MsgBox Filepath2
     
 '-------------------------------------------------------------------------
- '�㲻��ͬʱ�����ļ�������Ҫ������ļ�������������Ҫ��ȡ�ĵ������ɵ��ļ��е�·�� Filepath2
-'����Ѵ��ڴ��ļ��У���ô��ȡ·��
-'��������ڡ���ô���½��ļ��У��ٻ�ȡ·��
+'You can't define both the folder name and the name of the file to be saved, so we'll start by taking the path to the folder that was created that day Filepath2
+'If this folder already exists, then get the path
+'If it doesn't exist. Then, create a new folder and get the path again
+
 
 
 
 For Each sht In Sheets
 
     k = 0
-    '��ԭ��ֹ��
+    'Restore terminator
     Krow = sht.Range("a65536").End(xlUp).Row
-    '����Ҳ����ֹ���������������Ҳ����Ҫ����
+    'The number of lines is also the terminator, and it does not need to be generated if there are less than two lines
     
     If sht.Name = "TRACKING FR" Or Krow < 2 Then
     
         k = 1
         
     End If
-    'k =1 ��������Ϊ��ֹ��
+    'k =1 Here as terminator
     
     If k = 0 Then
     
         sht.Copy
         'ActiveWorkbook.SaveAs Filename:="g:\data\ " & sht.Name & ".xlsx"
-         '��Ϊԭ���룬�̶�������g:\data �ļ�������
-         '��������Ҫ�����ڵ�ǰ�ļ���
+         'This is the original code, fixed and saved under the g:\data folder
+         'Now we want to save it in the current folder
         
-        '����������2���㲻��ͬʱ�����ļ�������Ҫ������ļ�������������Ҫ��ȡ�ĵ������ɵ��ļ��е�·��Filepath2
+        '[New requirement 2] You can't define both the folder name and the file name to be saved, so we need to take the path of the folder generated on that day first Filepath2
     
         ActiveWorkbook.SaveAs Filename:=Filepath2 & "\" & sht.Name & " " & Format(Now(), "_yyyymmdd") & ".xlsx"
         ActiveWorkbook.Close
